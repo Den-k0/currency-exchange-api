@@ -10,10 +10,36 @@ requires-python = ">=3.12"
 dependencies = [
     "django (>=5.1.7,<6.0.0)",
     "djangorestframework (>=3.15.2,<4.0.0)",
-    "djangorestframework-simplejwt (>=5.5.0,<6.0.0)"
+    "djangorestframework-simplejwt (>=5.5.0,<6.0.0)",
+    "ruff (>=0.11.2,<0.12.0)"
 ]
 
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+
+[tool.ruff]
+line-length = 79
+exclude = [
+    "currency/migrations/*",
+    "users/migrations/*"
+]
+
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "N",  # PEP8 naming convetions
+]
+
+ignore = ["I001", "E731"]
+
+[tool.ruff.lint.flake8-quotes]
+inline-quotes = "double"
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
