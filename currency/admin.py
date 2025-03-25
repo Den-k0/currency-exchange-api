@@ -1,3 +1,6 @@
 from django.contrib import admin
 
-# Register your models here.
+from currency.models import CurrencyExchange, UserBalance
+
+admin.site.register(CurrencyExchange)
+admin.site.register(UserBalance)
