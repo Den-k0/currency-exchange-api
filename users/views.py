@@ -18,6 +18,7 @@ class ManageUserView(generics.RetrieveUpdateAPIView):
     Methods:
         get_object(): Returns the authenticated user object.
     """
+
     serializer_class = UserSerializer
     permission_classes = (IsAuthenticated,)
 

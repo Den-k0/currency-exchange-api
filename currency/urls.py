@@ -1,7 +1,9 @@
 from django.urls import path
 
 from currency.views import (
-    BalanceView, CurrencyExchangeView, CurrencyExchangeHistoryView
+    BalanceView,
+    CurrencyExchangeView,
+    CurrencyExchangeHistoryView,
 )
 
 urlpatterns = [
@@ -10,7 +12,7 @@ urlpatterns = [
     path(
         "history/",
         CurrencyExchangeHistoryView.as_view(),
-        name="currency_history"
+        name="currency_history",
     ),
 ]
 

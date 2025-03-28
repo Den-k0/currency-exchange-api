@@ -6,7 +6,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 api_key = os.getenv("EXCHANGE_RATE_API_KEY")
-EXCHANGE_RATE_API_URL = f"https://v6.exchangerate-api.com/v6/{api_key}/latest/USD"
+EXCHANGE_RATE_API_URL = (
+    f"https://v6.exchangerate-api.com/v6/{api_key}/latest/USD"
+)
 
 
 def get_exchange_rate(currency_code: str) -> float:
@@ -14,10 +16,12 @@ def get_exchange_rate(currency_code: str) -> float:
     Fetch the exchange rate for a given currency code.
 
     Args:
-        currency_code (str): The currency code for which to fetch the exchange rate.
+        currency_code (str): The currency code for which
+                             to fetch the exchange rate.
 
     Returns:
-        float: The exchange rate for the specified currency code, or None if the currency code is not found.
+        float: The exchange rate for the specified currency code,
+               or None if the currency code is not found.
 
     Raises:
         ValueError: If the ExchangeRate API key is not configured,

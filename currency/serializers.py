@@ -13,7 +13,7 @@ class CurrencyExchangeSerializer(serializers.ModelSerializer):
     currency_code = serializers.CharField(
         max_length=3,
         min_length=3,
-        validators=[RegexValidator(regex='^[A-Z]{3}$')]
+        validators=[RegexValidator(regex="^[A-Z]{3}$")],
     )
 
     class Meta:
@@ -26,6 +26,7 @@ class UserBalanceSerializer(serializers.ModelSerializer):
     Serializer for the UserBalance model,
     providing access to the user's balance.
     """
+
     class Meta:
         model = UserBalance
         fields = ("user", "balance")
