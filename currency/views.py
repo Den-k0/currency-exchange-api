@@ -2,6 +2,7 @@ from django.db import transaction
 from django_filters import rest_framework as filters
 from rest_framework import generics, status
 from rest_framework.exceptions import ValidationError
+from rest_framework.generics import get_object_or_404
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -19,7 +20,7 @@ class BalanceView(generics.RetrieveAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_object(self):
-        return UserBalance.objects.get(user=self.request.user)
+        return get_object_or_404(UserBalance, user=self.request.user)
 
 
 class CurrencyExchangeView(generics.CreateAPIView):
@@ -60,7 +61,14 @@ class CurrencyExchangeView(generics.CreateAPIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        rate = get_exchange_rate(currency_code)
+        try:
+            rate = get_exchange_rate(currency_code)
+        except ValueError as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         if rate is None:
             return Response(
                 {"error": "Invalid currency code"},
