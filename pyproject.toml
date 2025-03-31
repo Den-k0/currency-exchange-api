@@ -40,7 +40,7 @@ select = [
     "N",  # PEP8 naming convetions
 ]
 
-ignore = ["I001", "E731"]
+ignore = ["I001", "E731", "F403", "F405"]
 
 [tool.ruff.lint.flake8-quotes]
 inline-quotes = "double"
