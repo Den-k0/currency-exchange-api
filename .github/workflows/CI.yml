@@ -13,7 +13,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
       - uses: astral-sh/ruff-action@v3
+        with:
+          ruff-version: "0.11.2"
 
   test:
     runs-on: ubuntu-latest
