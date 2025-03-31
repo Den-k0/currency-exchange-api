@@ -1,5 +1,11 @@
 from django.db import transaction
 from django_filters import rest_framework as filters
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import (
+    extend_schema,
+    OpenApiParameter,
+    OpenApiExample,
+)
 from rest_framework import generics, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import get_object_or_404
@@ -15,6 +21,11 @@ from currency.serializers import (
 from currency.utils import get_exchange_rate
 
 
+@extend_schema(
+    summary="Retrieve User Balance",
+    description="Retrieve the balance of the authenticated user.",
+    responses={200: UserBalanceSerializer},
+)
 class BalanceView(generics.RetrieveAPIView):
     serializer_class = UserBalanceSerializer
     permission_classes = [IsAuthenticated]
@@ -23,6 +34,60 @@ class BalanceView(generics.RetrieveAPIView):
         return get_object_or_404(UserBalance, user=self.request.user)
 
 
+@extend_schema(
+    summary="Create Currency Exchange",
+    description=(
+        "This endpoint allows authenticated users to exchange their balance "
+        "for a specified currency. It deducts 1 coin from the user's balance "
+        "and records the exchange rate for the requested currency."
+    ),
+    request=CurrencyExchangeSerializer,
+    parameters=[
+        OpenApiParameter(
+            name="currency_code",
+            description="Currency code to exchange to (ISO 4217 format)",
+            required=True,
+            type=str,
+            location=OpenApiParameter.QUERY,
+            examples=[
+                OpenApiExample("USD Example", value="USD"),
+                OpenApiExample("EUR Example", value="EUR"),
+            ],
+        )
+    ],
+    responses={
+        201: CurrencyExchangeSerializer,
+        400: "Bad Request",
+    },
+    examples=[
+        OpenApiExample(
+            "Successful Request Example",
+            value={"currency_code": "USD"},
+            request_only=True,
+            description="Example of a valid exchange request",
+        ),
+        OpenApiExample(
+            "Successful Response Example",
+            value={
+                "id": 1,
+                "user": 1,
+                "currency_code": "USD",
+                "rate": 1.0,
+                "created_at": "2023-01-01T12:00:00Z",
+            },
+            response_only=True,
+            status_codes=["201"],
+            description="Example of successful exchange response",
+        ),
+        OpenApiExample(
+            "Error Response Example",
+            value={"error": "Invalid currency code"},
+            response_only=True,
+            status_codes=["400"],
+            description="Example of error response for invalid currency",
+        ),
+    ],
+)
 class CurrencyExchangeView(generics.CreateAPIView):
     """
     API view to handle currency exchange requests.
@@ -65,8 +130,7 @@ class CurrencyExchangeView(generics.CreateAPIView):
             rate = get_exchange_rate(currency_code)
         except ValueError as e:
             return Response(
-                {"error": str(e)},
-                status=status.HTTP_400_BAD_REQUEST
+                {"error": str(e)}, status=status.HTTP_400_BAD_REQUEST
             )
 
         if rate is None:
@@ -144,6 +208,74 @@ class CurrencyExchangeFilter(filters.FilterSet):
         return super().filter_queryset(queryset)
 
 
+@extend_schema(
+    summary="Get currency exchange history",
+    description=(
+        "Returns paginated history of currency exchanges"
+        "for authenticated user. Supports filtering"
+        "by currency code and date range."
+    ),
+    parameters=[
+        OpenApiParameter(
+            name="currency_code",
+            type=OpenApiTypes.STR,
+            location=OpenApiParameter.QUERY,
+            description="Filter by currency code (e.g. USD, EUR)",
+            examples=[
+                OpenApiExample("USD example", value="USD"),
+                OpenApiExample("EUR example", value="EUR"),
+            ],
+        ),
+        OpenApiParameter(
+            name="start_date",
+            type=OpenApiTypes.DATE,
+            location=OpenApiParameter.QUERY,
+            description="Start date for filtering (YYYY-MM-DD)",
+            examples=[
+                OpenApiExample("Start date example", value="2025-01-01"),
+            ],
+        ),
+        OpenApiParameter(
+            name="end_date",
+            type=OpenApiTypes.DATE,
+            location=OpenApiParameter.QUERY,
+            description="End date for filtering (YYYY-MM-DD)",
+            examples=[
+                OpenApiExample("End date example", value="2025-12-31"),
+            ],
+        ),
+    ],
+    examples=[
+        OpenApiExample(
+            "Successful response",
+            value={
+                "count": 10,
+                "next": "http://api.example.com/currency/history/?page=2",
+                "previous": None,
+                "results": [
+                    {
+                        "currency_code": "USD",
+                        "rate": 1,
+                        "created_at": "2025-03-25T12:34:56Z",
+                    }
+                ],
+            },
+            response_only=True,
+            status_codes=["200"],
+        ),
+        OpenApiExample(
+            "Invalid date range",
+            value={"detail": "End date must be after start date"},
+            response_only=True,
+            status_codes=["400"],
+        ),
+    ],
+    responses={
+        200: CurrencyExchangeSerializer(many=True),
+        400: OpenApiTypes.OBJECT,
+        401: OpenApiTypes.OBJECT,
+    },
+)
 class CurrencyExchangeHistoryView(generics.ListAPIView):
     """
     API view to list currency exchange history for the authenticated user.
