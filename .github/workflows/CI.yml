@@ -36,5 +36,5 @@ jobs:
         timeout-minutes: 5
         env:
           SECRET_KEY: ${ secrets.SECRET_KEY }
-          EXCHANGE_RATE_API_KEY: ${ secrets.EXCHANGE_RATE_API_KEY }
+          EXCHANGE_RATE_API_KEY: "mock-key"
         run: poetry run python manage.py test --noinput

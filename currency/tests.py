@@ -19,33 +19,53 @@ class CurrencyExchangeTests(APITestCase):
         UserBalance.objects.create(user=self.user, balance=1000)
         self.url = reverse("currency:currency")
 
-    def test_successful_exchange(self):
+    @patch("currency.views.get_exchange_rate")
+    def test_successful_exchange(self, mock_get_rate):
         """Test successful currency exchange"""
-        response = self.client.post(self.url, {"currency_code": "EUR"})
+        mock_get_rate.return_value = 1
+        response = self.client.post(
+            self.url, {"currency_code": "USD"}, format="json"
+        )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertTrue(CurrencyExchange.objects.exists())
         self.assertEqual(UserBalance.objects.get(user=self.user).balance, 999)
 
-    def test_insufficient_balance(self):
+    @patch("currency.views.get_exchange_rate")
+    def test_insufficient_balance(self, mock_get_rate):
         """Test exchange with zero balance"""
+        mock_get_rate.return_value = 1.0
         UserBalance.objects.filter(user=self.user).update(balance=0)
-        response = self.client.post(self.url, {"currency_code": "EUR"})
+        response = self.client.post(
+            self.url, {"currency_code": "USD"}, format="json"
+        )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("Insufficient balance", str(response.data))
+        self.assertEqual(response.data["error"], "Insufficient balance")
 
-    def test_invalid_currency(self):
+    @patch("currency.views.get_exchange_rate")
+    def test_invalid_currency(self, mock_get_rate):
         """Test with invalid currency code"""
-        response = self.client.post(self.url, {"currency_code": "INVALID"})
+        mock_get_rate.return_value = None
+        response = self.client.post(
+            self.url, {"currency_code": "INVALID"}, format="json"
+        )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("Invalid currency code", str(response.data))
+        self.assertEqual(response.data["error"], "Invalid currency code")
 
-    def test_api_timeout(self):
+    @patch("currency.views.get_exchange_rate")
+    def test_api_timeout(self, mock_get_rate):
         """Test handling of ExchangeRate API timeout"""
-        with patch("currency.views.get_exchange_rate") as mock_get_rate:
-            mock_get_rate.side_effect = ValueError("Exchange rate API timeout")
-            response = self.client.post(self.url, {"currency_code": "EUR"})
-            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-            self.assertIn("Exchange rate API timeout", str(response.data))
+        mock_get_rate.side_effect = ValueError("Exchange rate API timeout")
+        response = self.client.post(
+            self.url, {"currency_code": "EUR"}, format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data["error"], "Exchange rate API timeout")
+
+    def test_missing_currency_code(self):
+        """Test request without currency_code parameter"""
+        response = self.client.post(self.url,{}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data["error"], "currency_code is required")
 
 
 class HistoryTests(APITestCase):

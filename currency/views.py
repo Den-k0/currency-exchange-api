@@ -147,13 +147,13 @@ class CurrencyExchangeView(generics.CreateAPIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # with transaction.atomic():
-        user_balance.balance -= 1
-        user_balance.save()
+        with transaction.atomic():
+            user_balance.balance -= 1
+            user_balance.save()
 
-        exchange = CurrencyExchange.objects.create(
-            user=user, currency_code=currency_code.upper(), rate=rate
-        )
+            exchange = CurrencyExchange.objects.create(
+                user=user, currency_code=currency_code.upper(), rate=rate
+            )
 
         return Response(
             CurrencyExchangeSerializer(exchange).data,
