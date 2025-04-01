@@ -1,17 +1,13 @@
-import os
-
 import requests
-from dotenv import load_dotenv
 
-load_dotenv()
+from core.settings import api_key
 
-api_key = os.getenv("EXCHANGE_RATE_API_KEY")
 EXCHANGE_RATE_API_URL = (
     f"https://v6.exchangerate-api.com/v6/{api_key}/latest/USD"
 )
 
 
-def get_exchange_rate(currency_code: str) -> float:
+def get_exchange_rate(currency_code: str) -> float | None:
     """
     Fetch the exchange rate for a given currency code.
 
