@@ -37,4 +37,4 @@ jobs:
         env:
           SECRET_KEY: ${ secrets.SECRET_KEY }
           EXCHANGE_RATE_API_KEY: ${ secrets.EXCHANGE_RATE_API_KEY }
-        run: poetry run python manage.py test --parallel --noinput
+        run: poetry run python manage.py test --noinput
