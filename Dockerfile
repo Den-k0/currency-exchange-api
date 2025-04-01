@@ -38,7 +38,7 @@ RUN adduser \
     appuser
 
 # Install Poetry with a specific version
-RUN pip install "poetry==$POETRY_VERSION"
+RUN pip install "poetry==$POETRY_VERSION" --no-cache-dir
 
 # Copy dependency files and install dependencies
 COPY pyproject.toml poetry.lock ./
