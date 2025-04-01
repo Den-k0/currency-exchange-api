@@ -57,7 +57,7 @@ class BalanceView(generics.RetrieveAPIView):
     ],
     responses={
         201: CurrencyExchangeSerializer,
-        400: "Bad Request",
+        400: OpenApiTypes.OBJECT,
     },
     examples=[
         OpenApiExample(
@@ -104,7 +104,6 @@ class CurrencyExchangeView(generics.CreateAPIView):
     serializer_class = CurrencyExchangeSerializer
     permission_classes = [IsAuthenticated]
 
-    @transaction.atomic
     def create(self, request, *args, **kwargs):
         """
         Handle the creation of a currency exchange record.
@@ -146,12 +145,13 @@ class CurrencyExchangeView(generics.CreateAPIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        user_balance.balance -= 1
-        user_balance.save()
+        with transaction.atomic():
+            user_balance.balance -= 1
+            user_balance.save()
 
-        exchange = CurrencyExchange.objects.create(
-            user=user, currency_code=currency_code.upper(), rate=rate
-        )
+            exchange = CurrencyExchange.objects.create(
+                user=user, currency_code=currency_code.upper(), rate=rate
+            )
 
         return Response(
             CurrencyExchangeSerializer(exchange).data,
@@ -187,6 +187,7 @@ class CurrencyExchangeFilter(filters.FilterSet):
             ```
     """
 
+    permission_classes = [IsAuthenticated]
     currency_code = filters.CharFilter(
         field_name="currency_code", lookup_expr="iexact"
     )
@@ -297,6 +298,8 @@ class CurrencyExchangeHistoryView(generics.ListAPIView):
     page_size = 10
 
     def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return CurrencyExchange.objects.none()
         return CurrencyExchange.objects.filter(
             user=self.request.user
         ).order_by("-created_at")
